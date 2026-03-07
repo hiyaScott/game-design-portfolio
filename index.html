@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>游戏设计作品集 - Game Design Portfolio</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            color: #fff;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            min-height: 100vh;
+            padding: 40px 20px;
+        }
+        
+        h1 {
+            text-align: center;
+            font-size: 36px;
+            margin-bottom: 10px;
+            background: linear-gradient(135deg, #00d4ff, #ff00ff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        
+        .subtitle {
+            text-align: center;
+            color: #888;
+            margin-bottom: 40px;
+        }
+        
+        .intro {
+            max-width: 800px;
+            margin: 0 auto 40px;
+            padding: 20px;
+            background: rgba(255,255,255,0.05);
+            border-radius: 10px;
+            line-height: 1.8;
+        }
+        
+        .games-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        .game-card {
+            background: rgba(255,255,255,0.1);
+            border-radius: 15px;
+            padding: 25px;
+            transition: all 0.3s;
+            border: 2px solid transparent;
+        }
+        
+        .game-card:hover {
+            transform: translateY(-5px);
+            border-color: #00d4ff;
+            box-shadow: 0 10px 30px rgba(0, 212, 255, 0.2);
+        }
+        
+        .game-card.completed {
+            border-color: #00ff00;
+        }
+        
+        .game-card.pending {
+            opacity: 0.6;
+        }
+        
+        .game-number {
+            display: inline-block;
+            width: 30px;
+            height: 30px;
+            background: linear-gradient(135deg, #00d4ff, #0099cc);
+            border-radius: 50%;
+            text-align: center;
+            line-height: 30px;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        
+        .game-score {
+            float: right;
+            color: #ffaa00;
+            font-weight: bold;
+        }
+        
+        h2 {
+            font-size: 22px;
+            margin-bottom: 10px;
+        }
+        
+        .game-type {
+            color: #888;
+            font-size: 14px;
+            margin-bottom: 15px;
+        }
+        
+        .game-desc {
+            line-height: 1.6;
+            margin-bottom: 20px;
+            min-height: 80px;
+        }
+        
+        .play-btn {
+            display: inline-block;
+            background: linear-gradient(135deg, #00d4ff, #0099cc);
+            color: #000;
+            padding: 10px 25px;
+            border-radius: 25px;
+            text-decoration: none;
+            font-weight: bold;
+            transition: all 0.3s;
+        }
+        
+        .play-btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 5px 20px rgba(0, 212, 255, 0.4);
+        }
+        
+        .play-btn.disabled {
+            background: #333;
+            color: #666;
+            pointer-events: none;
+        }
+        
+        .footer {
+            text-align: center;
+            margin-top: 60px;
+            color: #666;
+        }
+    </style>
+</head>
+<body>
+    <h1>🎮 游戏设计作品集</h1>
+    <p class="subtitle">基于游戏设计理论创作的5款原创游戏</p>
+    
+    <div class="intro">
+        <p><strong>项目背景：</strong> 从10个游戏设计案中，根据《游戏设计艺术》《游戏设计快乐之道》《游戏规则》等经典理论评分，选出Top 5开发完成。</p>
+        <p><strong>评分维度：</strong> 有意义玩法(20%) + 心流潜力(20%) + 创新性(15%) + 技术可行性(15%) + 趣味性(15%) + 学习曲线(15%)</p>
+    </div>
+    
+    <div class="games-grid">
+        <div class="game-card completed">
+            <span class="game-number">1</span>
+            <span class="game-score">92分 🥇</span>
+            <h2>时间切片</h2>
+            <p class="game-type">动作解谜 | Time Slice</p>
+            <p class="game-desc">冻结时间，规划路径，执行计划。策略与动作的完美结合。预判敌人的移动，在时间的缝隙中穿行。</p>
+            <a href="./games/time-slice/index.html" class="play-btn">▶️ 开始游戏</a>
+        </div>
+        
+        <div class="game-card pending">
+            <span class="game-number">2</span>
+            <span class="game-score">90分 🥈</span>
+            <h2>颜色交响曲</h2>
+            <p class="game-type">音乐节奏 | Color Symphony</p>
+            <p class="game-desc">彩色音符伴随音乐落下，在正确时机点击对应颜色。颜色组合产生和弦，带来双重感官刺激。</p>
+            <a href="#" class="play-btn disabled">🚧 开发中</a>
+        </div>
+        
+        <div class="game-card pending">
+            <span class="game-number">3</span>
+            <span class="game-score">90分 🥉</span>
+            <h2>词语炼金术</h2>
+            <p class="game-type">文字解谜 | Word Alchemy</p>
+            <p class="game-desc">通过组合基础词语创造新概念。火+水=蒸汽。基于语义逻辑的解谜，寓教于乐。</p>
+            <a href="#" class="play-btn disabled">🚧 开发中</a>
+        </div>
+        
+        <div class="game-card pending">
+            <span class="game-number">4</span>
+            <span class="game-score">89分</span>
+            <h2>形状变形记</h2>
+            <p class="game-type">平台跳跃 | Shape Shifter</p>
+            <p class="game-desc">在圆形、方形、三角形之间实时变形。每种形状有独特能力，根据地形快速切换。</p>
+            <a href="#" class="play-btn disabled">🚧 开发中</a>
+        </div>
+        
+        <div class="game-card pending">
+            <span class="game-number">5</span>
+            <span class="game-score">88分</span>
+            <h2>节奏指挥官</h2>
+            <p class="game-type">策略节奏 | Rhythm Commander</p>
+            <p class="game-desc">指挥军队，所有行动配合音乐节奏。策略与节奏的完美结合，音乐即战术。</p>
+            <a href="#" class="play-btn disabled">🚧 开发中</a>
+        </div>
+    </div>
+    
+    <div class="footer">
+        <p>基于经典游戏设计理论 | 10个设计案 → Top 5 → 产品开发</p>
+    </div>
+</body>
+</html>
