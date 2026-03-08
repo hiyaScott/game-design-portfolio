@@ -447,6 +447,74 @@
         let selectedSlot = null;
         let slots = [null, null];
         
+        // 音频上下文
+        let audioCtx = null;
+        
+        // 初始化音频
+        function initAudio() {
+            if (!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            }
+        }
+        
+        // 播放音效
+        function playSound(type) {
+            initAudio();
+            if (audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+            
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            
+            if (type === 'success') {
+                // 成功音效 - 上升音阶
+                osc.frequency.setValueAtTime(523.25, audioCtx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(1046.5, audioCtx.currentTime + 0.1);
+                gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
+                osc.start(audioCtx.currentTime);
+                osc.stop(audioCtx.currentTime + 0.3);
+            } else if (type === 'fail') {
+                // 失败音效 - 低音下降
+                osc.frequency.setValueAtTime(200, audioCtx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(100, audioCtx.currentTime + 0.2);
+                gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
+                osc.start(audioCtx.currentTime);
+                osc.stop(audioCtx.currentTime + 0.3);
+            } else if (type === 'unlock') {
+                // 解锁音效 - 清脆音
+                osc.frequency.setValueAtTime(880, audioCtx.currentTime);
+                osc.frequency.setValueAtTime(1100, audioCtx.currentTime + 0.05);
+                gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.2);
+                osc.start(audioCtx.currentTime);
+                osc.stop(audioCtx.currentTime + 0.2);
+            }
+        }
+        
+        // 元素分类
+        const elementCategories = {
+            '基础元素': ['火', '水', '土', '风'],
+            '自然现象': ['蒸汽', '云', '雨', '雾', '风暴', '海啸', '沙尘', '烟'],
+            '物质材料': ['岩浆', '石头', '金属', '工具', '木材', '炭', '城堡'],
+            '生命生物': ['植物', '生命', '鱼', '人', '家庭'],
+            '食物': ['食物', '烤鱼', '吐司', '番茄炒蛋', '薯条', '奶酪', '葡萄酒', '腊肉'],
+            '抽象概念': ['知识', '科学', '机器', '机器人', '爱', '幸福', '痛苦', '自由', '幻灭'],
+            '幽默彩蛋': ['人鱼', '人造人15号', '网红猫', '社畜', '熬夜', '加班', '作业', '失眠', '天使', '狼人']
+        };
+        
+        // 获取元素分类
+        function getElementCategory(element) {
+            for (const [category, elements] of Object.entries(elementCategories)) {
+                if (elements.includes(element)) return category;
+            }
+            return '其他';
+        }
+        
         // 关卡设计
         const levels = [
             { target: '蒸汽', hint: '火 + 水' },
@@ -467,27 +535,37 @@
             loadLevel();
         }
         
-        // 渲染元素库
+        // 渲染元素库（按分类）
         function renderElements() {
             const grid = document.getElementById('elementsGrid');
-            grid.innerHTML = unlockedElements.map(el => 
-                `\u003cdiv class="element" onclick="selectElement('${el}')" data-element="${el}"\u003e${el}\u003c/div\u003e`
-            ).join('');
+            
+            // 按分类组织元素
+            const categorized = {};
+            unlockedElements.forEach(el => {
+                const cat = getElementCategory(el);
+                if (!categorized[cat]) categorized[cat] = [];
+                categorized[cat].push(el);
+            });
+            
+            // 按优先级排序分类
+            const categoryOrder = ['基础元素', '自然现象', '物质材料', '生命生物', '食物', '抽象概念', '幽默彩蛋', '其他'];
+            
+            let html = '';
+            categoryOrder.forEach(cat => {
+                if (categorized[cat] && categorized[cat].length > 0) {
+                    html += `<div class="category-section">`;
+                    html += `<div class="category-title">${cat}</div>`;
+                    html += `<div class="category-elements">`;
+                    categorized[cat].forEach(el => {
+                        html += `<div class="element" onclick="selectElement('${el}')" data-element="${el}">${el}</div>`;
+                    });
+                    html += `</div></div>`;
+                }
+            });
+            
+            grid.innerHTML = html || '<span style="color:#666">暂无已解锁元素</span>';
         }
         
-        // 渲染配方书
-        function renderRecipes() {
-            const container = document.getElementById('recipes');
-            if (unlockedRecipes.length === 0) {
-                container.innerHTML = '\u003cspan style="color:#666"\u003e暂无已解锁配方\u003c/span\u003e';
-                return;
-            }
-            container.innerHTML = unlockedRecipes.map(r => 
-                `\u003cdiv class="recipe unlocked"\u003e${r.input.join('+')} = ${r.output}\u003c/div\u003e`
-            ).join('');
-        }
-        
-        // 加载关卡
         function loadLevel() {
             const lvl = levels[(level - 1) % levels.length];
             document.getElementById('targetWord').textContent = lvl.target;
@@ -585,6 +663,7 @@
                     score += 100;
                     document.getElementById('score').textContent = score;
                     showMessage('✨', `炼成成功！获得: ${result}`);
+                    playSound('success');
                     
                     setTimeout(() => {
                         level++;
@@ -592,11 +671,13 @@
                     }, 1500);
                 } else {
                     showMessage('✓', `炼成: ${result}`);
+                    playSound('unlock');
                 }
                 
                 clearSlots();
             } else {
                 showMessage('✗', '这两个元素无法组合');
+                playSound('fail');
             }
         }
         
