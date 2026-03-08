@@ -550,6 +550,13 @@
                     renderElements();
                 }
                 
+                // 特殊解锁：合成家庭后自动解锁爱
+                if (result === '家庭' && !unlockedElements.includes('爱')) {
+                    unlockedElements.push('爱');
+                    renderElements();
+                    showMessage('❤️', '解锁新元素：爱');
+                }
+                
                 // 记录配方
                 const recipeKey = slots.sort().join('+');
                 if (!unlockedRecipes.find(r => r.output === result)) {
