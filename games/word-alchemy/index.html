@@ -408,6 +408,7 @@
             '科学+金属': '机器',
             '机器+生命': '机器人',
             '家庭+爱': '幸福',
+            '人+人': '爱',
         };
         
         // 反向查找配方
@@ -548,13 +549,6 @@
                 if (!unlockedElements.includes(result)) {
                     unlockedElements.push(result);
                     renderElements();
-                }
-                
-                // 特殊解锁：合成家庭后自动解锁爱
-                if (result === '家庭' && !unlockedElements.includes('爱')) {
-                    unlockedElements.push('爱');
-                    renderElements();
-                    showMessage('❤️', '解锁新元素：爱');
                 }
                 
                 // 记录配方
