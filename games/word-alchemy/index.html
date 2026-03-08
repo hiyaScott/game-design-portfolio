@@ -297,14 +297,16 @@
             justify-content: space-between;
             margin-bottom: 20px;
             padding: 0 20px;
+            flex-wrap: wrap;
         }
         
-        .level, .score {
+        .level, .score, .combine-count, .recipe-count {
             font-family: 'Courier New', monospace;
             color: #888;
+            margin: 5px 10px;
         }
         
-        .level span, .score span {
+        .level span, .score span, .combine-count span, .recipe-count span {
             color: #f8b500;
             font-weight: bold;
         }
@@ -320,6 +322,8 @@
         <div class="level-info">
             <div class="level">关卡: <span id="level">1</span></div>
             <div class="score">得分: <span id="score">0</span></div>
+            <div class="combine-count">合成: <span id="combineCount">0</span>次</div>
+            <div class="recipe-count">配方: <span id="recipeCount">0</span>个</div>
         </div>
         
         <!-- 目标 -->
@@ -443,6 +447,8 @@
         // 游戏状态
         let level = 1;
         let score = 0;
+        let combineCount = 0; // 合成次数统计
+        let newRecipeCount = 0; // 新配方数量
         let unlockedElements = ['火', '水', '土', '风'];
         let unlockedRecipes = [];
         let selectedSlot = null;
@@ -471,29 +477,38 @@
             gain.connect(audioCtx.destination);
             
             if (type === 'success') {
-                // 成功音效 - 上升音阶
+                // 过关音效 - 华丽上升
                 osc.frequency.setValueAtTime(523.25, audioCtx.currentTime);
                 osc.frequency.exponentialRampToValueAtTime(1046.5, audioCtx.currentTime + 0.1);
+                osc.frequency.exponentialRampToValueAtTime(2093.0, audioCtx.currentTime + 0.2);
+                gain.gain.setValueAtTime(0.4, audioCtx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.5);
+                osc.start(audioCtx.currentTime);
+                osc.stop(audioCtx.currentTime + 0.5);
+            } else if (type === 'newRecipe') {
+                // 新配方音效 - 清脆悦耳
+                osc.frequency.setValueAtTime(880, audioCtx.currentTime);
+                osc.frequency.setValueAtTime(1100, audioCtx.currentTime + 0.05);
+                osc.frequency.setValueAtTime(1320, audioCtx.currentTime + 0.1);
                 gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
                 gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
                 osc.start(audioCtx.currentTime);
                 osc.stop(audioCtx.currentTime + 0.3);
+            } else if (type === 'knownRecipe') {
+                // 已知配方音效 - 温和提示
+                osc.frequency.setValueAtTime(440, audioCtx.currentTime);
+                gain.gain.setValueAtTime(0.2, audioCtx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.15);
+                osc.start(audioCtx.currentTime);
+                osc.stop(audioCtx.currentTime + 0.15);
             } else if (type === 'fail') {
-                // 失败音效 - 低音下降
+                // 失败音效
                 osc.frequency.setValueAtTime(200, audioCtx.currentTime);
                 osc.frequency.exponentialRampToValueAtTime(100, audioCtx.currentTime + 0.2);
                 gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
                 gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
                 osc.start(audioCtx.currentTime);
                 osc.stop(audioCtx.currentTime + 0.3);
-            } else if (type === 'unlock') {
-                // 解锁音效 - 清脆音
-                osc.frequency.setValueAtTime(880, audioCtx.currentTime);
-                osc.frequency.setValueAtTime(1100, audioCtx.currentTime + 0.05);
-                gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
-                gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.2);
-                osc.start(audioCtx.currentTime);
-                osc.stop(audioCtx.currentTime + 0.2);
             }
         }
         
@@ -571,6 +586,8 @@
             const lvl = levels[(level - 1) % levels.length];
             document.getElementById('targetWord').textContent = lvl.target;
             document.getElementById('level').textContent = level;
+            document.getElementById('combineCount').textContent = combineCount;
+            document.getElementById('recipeCount').textContent = newRecipeCount;
             clearSlots();
         }
         
@@ -638,41 +655,77 @@
                 return;
             }
             
+            // 统计合成次数
+            combineCount++;
+            
             const key1 = `${slots[0]}+${slots[1]}`;
             const key2 = `${slots[1]}+${slots[0]}`;
             const result = recipes[key1] || recipes[key2];
             
             if (result) {
-                // 检查是否是目标
+                // 检查是否是目标（先检查，避免slots被修改）
                 const target = document.getElementById('targetWord').textContent;
+                const isTarget = (result === target);
+                
+                // 检查是否是新配方（使用slice复制数组，避免修改原数组）
+                const isNewRecipe = !unlockedRecipes.find(r => r.output === result);
+                const isNewElement = !unlockedElements.includes(result);
                 
                 // 解锁新元素
-                if (!unlockedElements.includes(result)) {
+                if (isNewElement) {
                     unlockedElements.push(result);
                     renderElements();
                 }
                 
                 // 记录配方
-                const recipeKey = slots.sort().join('+');
-                if (!unlockedRecipes.find(r => r.output === result)) {
-                    unlockedRecipes.push({ input: slots.slice().sort(), output: result });
+                if (isNewRecipe) {
+                    unlockedRecipes.push({ input: [...slots].sort(), output: result });
                     renderRecipes();
+                    newRecipeCount++;
+                    // 新配方奖励分数
+                    score += 50;
+                } else {
+                    // 已有配方奖励较少分数
+                    score += 10;
                 }
                 
-                if (result === target) {
-                    // 过关
+                // 更新分数显示
+                document.getElementById('score').textContent = score;
+                document.getElementById('combineCount').textContent = combineCount;
+                document.getElementById('recipeCount').textContent = newRecipeCount;
+                
+                if (isTarget) {
+                    // 过关 - 额外奖励
                     score += 100;
                     document.getElementById('score').textContent = score;
-                    showMessage('✨', `炼成成功！获得: ${result}`);
+                    
+                    // 激励性提示
+                    const encouragements = ['🎉 太棒了！', '✨ 炼金大师！', '🌟 完美合成！', '💎 天才！'];
+                    const randomEncouragement = encouragements[Math.floor(Math.random() * encouragements.length)];
+                    
+                    showMessage(randomEncouragement, `成功合成目标：${result}！解锁下一关！`);
                     playSound('success');
+                    
+                    // 显示统计
+                    console.log(`本关统计：合成${combineCount}次，发现${newRecipeCount}个新配方`);
                     
                     setTimeout(() => {
                         level++;
+                        combineCount = 0; // 重置本关合成次数
+                        newRecipeCount = 0; // 重置本关新配方数
                         loadLevel();
-                    }, 1500);
+                    }, 2000);
                 } else {
-                    showMessage('✓', `炼成: ${result}`);
-                    playSound('unlock');
+                    // 普通合成 - 区分新配方和已有配方
+                    if (isNewRecipe) {
+                        const newMessages = ['🎊 新发现！', '💡 重大突破！', '🔥 全新配方！', '⭐ 第一次合成！'];
+                        const randomMsg = newMessages[Math.floor(Math.random() * newMessages.length)];
+                        showMessage(randomMsg, `发现了新元素：${result}！`);
+                        playSound('newRecipe');
+                    } else {
+                        showMessage('📝 已有配方', `${result}（配方已收录）`);
+                        playSound('knownRecipe');
+                    }
                 }
                 
                 clearSlots();
