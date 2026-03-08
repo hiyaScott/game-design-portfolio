@@ -328,7 +328,7 @@
         
         <!-- 目标 -->
         <div class="target-section">
-            <div class="target-label">目标词汇</div>
+            <div class="target-label" id="targetLabel">关卡01——目标词汇——</div>
             <div class="target-word" id="targetWord">蒸汽</div>
         </div>
         
@@ -458,9 +458,55 @@
         let audioCtx = null;
         
         // 初始化音频
+        let bgmOsc = null;
+        let bgmInterval = null;
+        
         function initAudio() {
             if (!audioCtx) {
                 audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            }
+        }
+        
+        // 播放背景音乐
+        function playBGM() {
+            initAudio();
+            if (audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+            
+            // 停止之前的BGM
+            stopBGM();
+            
+            const notes = [261.63, 329.63, 392.00, 523.25]; // C大调琶音
+            let noteIndex = 0;
+            
+            bgmInterval = setInterval(() => {
+                if (!audioCtx) return;
+                
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                
+                osc.frequency.value = notes[noteIndex % notes.length];
+                osc.type = 'sine';
+                
+                gain.gain.setValueAtTime(0.05, audioCtx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 1);
+                
+                osc.start(audioCtx.currentTime);
+                osc.stop(audioCtx.currentTime + 1);
+                
+                noteIndex++;
+            }, 2000); // 每2秒播放一个音符
+        }
+        
+        // 停止背景音乐
+        function stopBGM() {
+            if (bgmInterval) {
+                clearInterval(bgmInterval);
+                bgmInterval = null;
             }
         }
         
@@ -549,6 +595,12 @@
             renderElements();
             renderRecipes();
             loadLevel();
+            
+            // 用户首次交互时启动BGM
+            document.addEventListener('click', function startBGMOnce() {
+                playBGM();
+                document.removeEventListener('click', startBGMOnce);
+            }, { once: true });
         }
         
         // 渲染元素库（按分类）
@@ -619,6 +671,7 @@
         function loadLevel() {
             const lvl = levels[(level - 1) % levels.length];
             document.getElementById('targetWord').textContent = lvl.target;
+            document.getElementById('targetLabel').textContent = `关卡${String(level).padStart(2, '0')}——目标词汇——`;
             document.getElementById('level').textContent = level;
             document.getElementById('combineCount').textContent = combineCount;
             document.getElementById('recipeCount').textContent = newRecipeCount;
