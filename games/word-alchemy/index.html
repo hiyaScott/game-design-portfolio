@@ -582,6 +582,40 @@
             grid.innerHTML = html || '<span style="color:#666">暂无已解锁元素</span>';
         }
         
+        // 渲染配方书（按分类）
+        function renderRecipes() {
+            const container = document.getElementById('recipes');
+            if (unlockedRecipes.length === 0) {
+                container.innerHTML = '<span style="color:#666">暂无已解锁配方</span>';
+                return;
+            }
+            
+            // 按输出元素的分类组织配方
+            const categorized = {};
+            unlockedRecipes.forEach(r => {
+                const cat = getElementCategory(r.output);
+                if (!categorized[cat]) categorized[cat] = [];
+                categorized[cat].push(r);
+            });
+            
+            // 按优先级排序分类
+            const categoryOrder = ['基础元素', '自然现象', '物质材料', '生命生物', '食物', '抽象概念', '幽默彩蛋', '其他'];
+            
+            let html = '';
+            categoryOrder.forEach(cat => {
+                if (categorized[cat] && categorized[cat].length > 0) {
+                    html += `<div class="recipe-category">`;
+                    html += `<div class="recipe-category-title">${cat}</div>`;
+                    categorized[cat].forEach(r => {
+                        html += `<div class="recipe unlocked">${r.input.join('+')} = ${r.output}</div>`;
+                    });
+                    html += `</div>`;
+                }
+            });
+            
+            container.innerHTML = html;
+        }
+        
         function loadLevel() {
             const lvl = levels[(level - 1) % levels.length];
             document.getElementById('targetWord').textContent = lvl.target;
