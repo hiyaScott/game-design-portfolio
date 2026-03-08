@@ -664,7 +664,7 @@
             
             if (result) {
                 // 检查是否是目标（先检查，避免slots被修改）
-                const target = document.getElementById('targetWord').textContent;
+                const target = document.getElementById('targetWord').textContent.trim();
                 const isTarget = (result === target);
                 
                 // 检查是否是新配方（使用slice复制数组，避免修改原数组）
