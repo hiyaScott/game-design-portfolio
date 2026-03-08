@@ -650,7 +650,10 @@
         
         // 炼成
         function combine() {
-            if (!slots[0] || !slots[1]) {
+            // 立即保存当前 slots 的快照，防止后续被修改
+            const currentSlots = [slots[0], slots[1]];
+            
+            if (!currentSlots[0] || !currentSlots[1]) {
                 showMessage('⚠️', '请先选择两个元素');
                 return;
             }
@@ -658,16 +661,16 @@
             // 统计合成次数
             combineCount++;
             
-            const key1 = `${slots[0]}+${slots[1]}`;
-            const key2 = `${slots[1]}+${slots[0]}`;
+            const key1 = `${currentSlots[0]}+${currentSlots[1]}`;
+            const key2 = `${currentSlots[1]}+${currentSlots[0]}`;
             const result = recipes[key1] || recipes[key2];
             
             if (result) {
-                // 检查是否是目标（先检查，避免slots被修改）
+                // 检查是否是目标（使用 currentSlots，不是全局 slots）
                 const target = document.getElementById('targetWord').textContent.trim();
                 const isTarget = (result === target);
                 
-                // 检查是否是新配方（使用slice复制数组，避免修改原数组）
+                // 检查是否是新配方
                 const isNewRecipe = !unlockedRecipes.find(r => r.output === result);
                 const isNewElement = !unlockedElements.includes(result);
                 
@@ -677,15 +680,16 @@
                     renderElements();
                 }
                 
-                // 记录配方
+                // 记录配方（使用 currentSlots 的副本）
                 if (isNewRecipe) {
-                    unlockedRecipes.push({ input: [...slots].sort(), output: result });
+                    unlockedRecipes.push({ 
+                        input: [currentSlots[0], currentSlots[1]].sort(), 
+                        output: result 
+                    });
                     renderRecipes();
                     newRecipeCount++;
-                    // 新配方奖励分数
                     score += 50;
                 } else {
-                    // 已有配方奖励较少分数
                     score += 10;
                 }
                 
@@ -695,28 +699,23 @@
                 document.getElementById('recipeCount').textContent = newRecipeCount;
                 
                 if (isTarget) {
-                    // 过关 - 额外奖励
+                    // 过关
                     score += 100;
                     document.getElementById('score').textContent = score;
                     
-                    // 激励性提示
                     const encouragements = ['🎉 太棒了！', '✨ 炼金大师！', '🌟 完美合成！', '💎 天才！'];
                     const randomEncouragement = encouragements[Math.floor(Math.random() * encouragements.length)];
                     
                     showMessage(randomEncouragement, `成功合成目标：${result}！解锁下一关！`);
                     playSound('success');
                     
-                    // 显示统计
-                    console.log(`本关统计：合成${combineCount}次，发现${newRecipeCount}个新配方`);
-                    
                     setTimeout(() => {
                         level++;
-                        combineCount = 0; // 重置本关合成次数
-                        newRecipeCount = 0; // 重置本关新配方数
+                        combineCount = 0;
+                        newRecipeCount = 0;
                         loadLevel();
                     }, 2000);
                 } else {
-                    // 普通合成 - 区分新配方和已有配方
                     if (isNewRecipe) {
                         const newMessages = ['🎊 新发现！', '💡 重大突破！', '🔥 全新配方！', '⭐ 第一次合成！'];
                         const randomMsg = newMessages[Math.floor(Math.random() * newMessages.length)];
